@@ -11,11 +11,10 @@ def run_portfolio_tracker():
     Central logging module executed natively by your 60+ apps.
     Sends raw analytics payload metrics straight to your Google Sheet.
     """
-    current_host = st.context.headers.get("host", "")
-    
-    # 🛡️ SECURITY OVERRIDE LOCK
-    # Restricts logging events exclusively to your profile workspace domains
-    if "srinivasta" not in current_host.lower() and "localhost" not in current_host:
+    # 🛡️ FIXED SECURITY OVERRIDE LOCK
+    # Streamlit Cloud apps run on share.streamlit.io, or localhost during testing
+    current_host = st.context.headers.get("host", "").lower()
+    if "streamlit" not in current_host and "localhost" not in current_host:
         return 
 
     # 🔄 RUN-ONCE DEBOUNCE BLOCK
@@ -33,8 +32,9 @@ def run_portfolio_tracker():
             ctx = st.runtime.scriptrunner.script_run_context.get_script_run_ctx()
             session_id = ctx.session_id if ctx else "No_Session"
             
-            # Automatically grabs the exact folder string to use as the app's name label
-            app_name = os.path.basename(os.path.dirname(__file__)) if '__file__' in locals() else "Unknown_App"
+            # 📊 FIXED APP NAME DETECTION
+            # Automatically grabs the active repository directory name (e.g., 'streamlit-portfolio-analytics')
+            app_name = os.path.basename(os.getcwd()) if os.path.basename(os.getcwd()) else "Unknown_App"
 
             payload = {
                 "Timestamp": now,
