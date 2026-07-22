@@ -1,3 +1,4 @@
-# Your other app requirements (pandas, plotly, etc.)
-gsheetsdb
-git+https://github.com/SRINIVASTA/gigo-xero
+streamlit
+scikit-learn
+pandas
+matplotlib
