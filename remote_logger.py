@@ -10,7 +10,7 @@ def run_portfolio_tracker():
     Central logging module executed natively by your 60+ apps.
     Sends raw analytics payload metrics straight to your Google Sheet.
     """
-    # 🌐 WEB-OPTIMIZED DOMAIN LOCK
+    # 🛡️ SECURITY OVERRIDE LOCK
     current_host = st.context.headers.get("host", "").lower()
     if "streamlit" not in current_host and "localhost" not in current_host:
         return 
@@ -30,10 +30,9 @@ def run_portfolio_tracker():
             session_id = ctx.session_id if ctx else "No_Session"
             
             # 🌐 WEB-OPTIMIZED APP NAME EXTRACTION
-            # Captures the full page URL referrer (e.g., https://streamlit.io)
             referer_url = st.context.headers.get("referer", "")
-            if "srinivasta" in referer_url.lower():
-                # Strips out everything except the specific repository name component
+            if referer_url and "srinivasta" in referer_url.lower():
+                # Strips out everything except the specific repository name component from the URL path
                 url_parts = [part for part in referer_url.split("/") if part]
                 app_name = url_parts[-1].split("?")[0] if url_parts else "Unknown_App"
             else:
@@ -59,6 +58,7 @@ def run_portfolio_tracker():
             
             st.session_state.analytics_logged = True
         except Exception:
-            pass # Silent handling guarantees your web apps never crash for users
+            pass # Silent handling guarantees your apps never throw runtime errors
 
+# Execute analytics loop automatically on boot
 run_portfolio_tracker()
