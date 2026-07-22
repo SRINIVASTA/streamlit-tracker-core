@@ -2,7 +2,6 @@
 import datetime
 import hashlib
 import json
-import os
 import urllib.request
 import streamlit as st
 
@@ -11,14 +10,12 @@ def run_portfolio_tracker():
     Central logging module executed natively by your 60+ apps.
     Sends raw analytics payload metrics straight to your Google Sheet.
     """
-    # 🛡️ FIXED SECURITY OVERRIDE LOCK
-    # Streamlit Cloud apps run on share.streamlit.io, or localhost during testing
+    # 🌐 WEB-OPTIMIZED DOMAIN LOCK
     current_host = st.context.headers.get("host", "").lower()
     if "streamlit" not in current_host and "localhost" not in current_host:
         return 
 
     # 🔄 RUN-ONCE DEBOUNCE BLOCK
-    # Ensures only one logging line entry is written per tab session
     if "analytics_logged" not in st.session_state:
         try:
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -32,9 +29,15 @@ def run_portfolio_tracker():
             ctx = st.runtime.scriptrunner.script_run_context.get_script_run_ctx()
             session_id = ctx.session_id if ctx else "No_Session"
             
-            # 📊 FIXED APP NAME DETECTION
-            # Automatically grabs the active repository directory name (e.g., 'streamlit-portfolio-analytics')
-            app_name = os.path.basename(os.getcwd()) if os.path.basename(os.getcwd()) else "Unknown_App"
+            # 🌐 WEB-OPTIMIZED APP NAME EXTRACTION
+            # Captures the full page URL referrer (e.g., https://streamlit.io)
+            referer_url = st.context.headers.get("referer", "")
+            if "srinivasta" in referer_url.lower():
+                # Strips out everything except the specific repository name component
+                url_parts = [part for part in referer_url.split("/") if part]
+                app_name = url_parts[-1].split("?")[0] if url_parts else "Unknown_App"
+            else:
+                app_name = "Local_Test_Environment"
 
             payload = {
                 "Timestamp": now,
@@ -44,7 +47,6 @@ def run_portfolio_tracker():
             }
 
             # 🚀 ZERO-DEPENDENCY NETWORK DISPATCHER
-            # Pings the private script URL saved under your global workspace secrets panel
             req = urllib.request.Request(
                 st.secrets["google_analytics_url"], 
                 data=json.dumps(payload).encode('utf-8'), 
@@ -52,14 +54,11 @@ def run_portfolio_tracker():
                 method='POST'
             )
             
-            # Dispatches tracking attributes and closes connection under 3 seconds
             with urllib.request.urlopen(req, timeout=3) as response:
                 pass
             
-            # Locks state verification flag
             st.session_state.analytics_logged = True
         except Exception:
-            pass # Silent handling guarantees your apps never throw runtime errors
+            pass # Silent handling guarantees your web apps never crash for users
 
-# Execute analytics loop automatically on boot
 run_portfolio_tracker()
