@@ -1,4 +1,4 @@
-# remote_logger.py (Central logging engine)
+# remote_logger.py (TEST MODE)
 import datetime
 import hashlib
 import json
@@ -13,37 +13,25 @@ def run_portfolio_tracker():
     """
     # 🔄 RUN-ONCE DEBOUNCE BLOCK
     if "analytics_logged" not in st.session_state:
+        # 🧪 TEMP LOG FOR DEBUGGING
+        st.write("🔍 Telemetry Loop Started...")
+        
         try:
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             user_agent = st.context.headers.get("user-agent", "Unknown")
+            user_ip = getattr(st.context, "ip_address", "Local") or "Local"
             
-            # Grabs IP securely using Streamlit's fallback system tracking matrix
-            user_ip = "Local"
-            try:
-                if hasattr(st, "context") and hasattr(st.context, "ip_address"):
-                    user_ip = st.context.ip_address or "Local"
-            except Exception:
-                pass
-            
-            # Anonymizes user profiles into a secure 16-character tracking fingerprint
             user_fingerprint = hashlib.sha256(f"{user_agent}-{user_ip}".encode()).hexdigest()[:16]
             
-            # Extracts unique browser window tab session tokens
             ctx = st.runtime.scriptrunner.script_run_context.get_script_run_ctx()
             session_id = ctx.session_id if ctx else "No_Session"
             
-            # 🌐 WEB-OPTIMIZED APP NAME EXTRACTION (With Domain Fallbacks)
-            current_host = st.context.headers.get("host", "").lower() if hasattr(st, "context") else ""
-            referer_url = st.context.headers.get("referer", "") if hasattr(st, "context") else ""
-            
+            # 🌐 Web App Name Check
+            current_host = st.context.headers.get("host", "").lower()
             if "localhost" in current_host or not current_host:
                 app_name = "Local_Test_Environment"
-            elif referer_url and "srinivasta" in referer_url.lower():
-                url_parts = [part for part in referer_url.split("/") if part]
-                app_name = url_parts[-1].split("?")[0] if url_parts else "Unknown_App"
             else:
-                # Uses the clean subdomain part directly from your public app URL
-                app_name = current_host.split(".")[0] if current_host else "Cloud_Portfolio_App"
+                app_name = current_host.split(".")[0]
 
             payload = {
                 "Timestamp": now,
@@ -51,8 +39,10 @@ def run_portfolio_tracker():
                 "Session_ID": session_id,
                 "User_Fingerprint": user_fingerprint
             }
+            
+            st.write(f"📦 Payload assembled successfully: `{payload}`")
 
-            # 🚀 FIXED: Hardcoded your active Web App Macro URL directly to eliminate all secret dependency blocks!
+            # 🚀 Hardcoded macro script route link 
             tracking_endpoint = "https://google.com"
 
             req = urllib.request.Request(
@@ -62,16 +52,26 @@ def run_portfolio_tracker():
                 method='POST'
             )
             
-            # Safe network dispatcher wrapper to bypass Google 302/303 redirect triggers
+            st.write("📤 Attempting network dispatch to Google Sheet...")
+            
             try:
-                with urllib.request.urlopen(req, timeout=4) as response:
-                    response.read()
-            except urllib.error.HTTPError:
-                pass 
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    res_data = response.read().decode('utf-8')
+                    st.success(f"✅ Server Response: {res_data}")
+            except urllib.error.HTTPError as e:
+                # Catch if Google redirects successfully
+                if e.code in [302, 303]:
+                    st.success("✅ Log successful! (Bypassed Google 302 Redirect)")
+                else:
+                    st.error(f"❌ Network HTTPError Code: {e.code}")
+            except urllib.error.URLError as e:
+                st.error(f"❌ Network URLError Reason: {e.reason}")
             
             st.session_state.analytics_logged = True
-        except Exception:
-            pass # Silent handling guarantees your apps never throw runtime container errors
+            
+        except Exception as main_error:
+            # 🚨 CRITICAL: Print the exact python error causing the script to quit
+            st.error(f"💥 Telemetry Core Crashed! Error Message: {str(main_error)}")
 
-# Execute analytics loop automatically on boot
+# Run it
 run_portfolio_tracker()
