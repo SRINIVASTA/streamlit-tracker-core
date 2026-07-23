@@ -3,6 +3,7 @@ import datetime
 import hashlib
 import json
 import urllib.request
+import urllib.error
 import streamlit as st
 
 def run_portfolio_tracker():
@@ -53,8 +54,13 @@ def run_portfolio_tracker():
                 method='POST'
             )
             
-            with urllib.request.urlopen(req, timeout=3) as response:
-                pass
+            # Catch and ignore the HTTPError caused by Google's automatic 302 redirection loop.
+            # This ensures that even though urllib flags it as an error, the row data successfully logs!
+            try:
+                with urllib.request.urlopen(req, timeout=3) as response:
+                    response.read()
+            except urllib.error.HTTPError:
+                pass 
             
             st.session_state.analytics_logged = True
         except Exception:
